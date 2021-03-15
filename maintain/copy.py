@@ -16,7 +16,7 @@ def git_copy(src,dst,temp_dir=base_dir):
         zip_ref.extractall(dst)
 
 
-def copy(src_root,target_root,filters=[]):
+def copy(src_root,target_root,filters=[],overwrite=True):
     #src_root = r'D:\work\H5\dist'
     #target_root = r'D:\work\Release\Live-Binary\H5\dist'
 
@@ -35,8 +35,13 @@ def copy(src_root,target_root,filters=[]):
                 except Exception:
                     pass
                 target_path = os.path.join(target_root, rel_path, fl)
-                shutil.copy(fl_path, target_path)
-                print(target_path)
+                if not overwrite:
+                    if not os.path.exists(target_path):
+                        shutil.copy(fl_path, target_path)
+                        print(target_path)
+                else:
+                    shutil.copy(fl_path, target_path)
+                    print(target_path)
         
         # 去掉不要的dir
         left_dirs = []
