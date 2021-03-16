@@ -85,6 +85,7 @@ class ELKHander(logging.Handler):
                         "offset":self.offset,
                     }
             })
+        general_log.debug('ready send %s'%len(actions))
         rt = helpers.bulk(self.es, actions)
         general_log.debug(rt)
     
