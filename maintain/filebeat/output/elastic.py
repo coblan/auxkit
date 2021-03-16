@@ -85,7 +85,8 @@ class ELKHander(logging.Handler):
                         "offset":self.offset,
                     }
             })
-        helpers.bulk(self.es, actions)
+        rt = helpers.bulk(self.es, actions)
+        general_log.debug(rt)
     
     #def emit(self, record): 
         #msg =   record.getMessage()
