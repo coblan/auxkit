@@ -1,4 +1,6 @@
 from . elastic import ELKHander,helpers
+import logging
+general_log = logging.getLogger('general_log')
 
 def elasticesearch_process(host,user,pswd,index,self,lines):
     if not hasattr(self,'es'):
@@ -62,4 +64,5 @@ class ELKProcess(ELKHander):
             })
         # 7版本的kibana不能正确识别offset，这里颠倒一下插入顺序，期望能够解决问题。
         actions.reverse()
-        helpers.bulk(self.es, actions)
+        rt = helpers.bulk(self.es, actions)
+        general_log.debug(rt)
