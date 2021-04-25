@@ -22,13 +22,22 @@ def elastice_output(host,user,pswd,index,handerCls,self,lines):
 
 class ELKHander(logging.Handler):
     def __init__(self,host, user,pswd,index):
-        self.index = index
+        self.index_str = index
+        self.current_index= ''
         self.es = Elasticsearch(host,http_auth=(user,pswd ),timeout=100,max_retries=3)
         self.make_index()
         self.hostName = socket.gethostname()
         self.offset = 0
         super().__init__()
-        #print('elk-log1')
+
+    @property
+    def index(self):
+        now = datetime.datetime.now()
+        index = self.index_str%{'year':now.year,'month':now.month,'day':now.day}
+        if index != self.current_index:
+            self.current_index = index
+            self.make_index()
+        return index
     
     def clean_hostname(self,msg):
         return {
@@ -66,8 +75,8 @@ class ELKHander(logging.Handler):
                 }
               }
             
-        if self.es.indices.exists(index= self.index ) is not True:
-            res = self.es.indices.create(index = self.index, body=_index_mappings) 
+        if self.es.indices.exists(index= self.current_index ) is not True:
+            res = self.es.indices.create(index = self.current_index, body=_index_mappings) 
     
     def send(self,lines):
         actions=[ ]

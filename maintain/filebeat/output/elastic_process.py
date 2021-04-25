@@ -42,8 +42,8 @@ class ELKProcess(ELKHander):
                 }
               }
             
-        if self.es.indices.exists(index= self.index ) is not True:
-            res = self.es.indices.create(index = self.index, body=_index_mappings) 
+        if self.es.indices.exists(index= self.current_index ) is not True:
+            res = self.es.indices.create(index = self.current_index, body=_index_mappings) 
     
     def send(self,lines):
         actions=[ ]
