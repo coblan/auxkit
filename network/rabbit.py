@@ -1,7 +1,16 @@
 import pika
 
 class AutoConnectBlockingPika(object):
-    "会自动重连，自动判断channel"
+    """
+    #主要功能为自动重连，自动判断连接情况，返回能用的channel
+    autopika = AutoConnectBlockingPika(host= dc['host'],port=dc['port'],user=dc['user'],password=dc['password'])
+    # 在任何地方调用getChannel()方法，获取到channel，直接使用channel进行操作，不用管重连等问题
+    channel = autopika.getChannel()
+    channel.exchange_declare(exchange = 'priceHistory',exchange_type='topic', durable = True)
+    channel.basic_publish(exchange= 'priceHistory',
+                         routing_key= 'BTCUSD',
+                         body=jsonmsg)
+    """
     def __init__(self, host,port=5672,user='',password='', **kwargs):
         self.host = host
         self.port=port
