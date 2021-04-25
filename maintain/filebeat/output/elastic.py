@@ -25,7 +25,7 @@ class ELKHander(logging.Handler):
         self.index_str = index
         self.current_index= ''
         self.es = Elasticsearch(host,http_auth=(user,pswd ),timeout=100,max_retries=3)
-        self.make_index()
+        #self.make_index()
         self.hostName = socket.gethostname()
         self.offset = 0
         super().__init__()
@@ -33,7 +33,7 @@ class ELKHander(logging.Handler):
     @property
     def index(self):
         now = datetime.datetime.now()
-        index = self.index_str%{'year':now.year,'month':now.month,'day':now.day}
+        index = self.index_str%{'year':now.year,'month':now.strftime('%m'),'day':now.strftime('%d')}
         if index != self.current_index:
             self.current_index = index
             self.make_index()
