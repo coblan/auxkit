@@ -1,4 +1,5 @@
 import pika
+import time
 
 class AutoConnectBlockingPika(object):
     """
@@ -52,6 +53,7 @@ class Consumer(AutoConnectBlockingPika):
                 self.channel.start_consuming()
             except Exception as e:
                 print(e)
+                time.sleep(10)
 
     def bind(self):
         print('need overwrite bind methods')
