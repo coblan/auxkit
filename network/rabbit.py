@@ -1,5 +1,7 @@
 import pika
 import time
+import logging
+general_log = logging.getLogger('general_log')
 
 class AutoConnectBlockingPika(object):
     """
@@ -52,7 +54,7 @@ class Consumer(AutoConnectBlockingPika):
                 self.bind()
                 self.channel.start_consuming()
             except Exception as e:
-                print(e)
+                general_log.error(e,exc_info=True)
                 time.sleep(10)
 
     def bind(self):
