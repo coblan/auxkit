@@ -2,7 +2,7 @@ import logging
 import logging.config
 import sys
 
-def set_log(path=None,level='DEBUG'):
+def set_log(path=None,level='DEBUG',is_debug=False):
     if path:
         config = {
             'version': 1,
@@ -21,13 +21,6 @@ def set_log(path=None,level='DEBUG'):
                     'stream': sys.stdout
                     }, 
                 'rotfile':{
-                    #'level': 'DEBUG',
-                    #'class': 'logging.handlers.RotatingFileHandler',
-                     ##'class': 'concurrent_log_handler.ConcurrentRotatingFileHandler',
-                    #'maxBytes': 1024*1024*5,
-                    #'backupCount':3,
-                    #'formatter':'standard',
-                    #'filename': path, 
                     'level': 'DEBUG',
                     'class': 'concurrent_log_handler.ConcurrentRotatingFileHandler',
                     'maxBytes': 1024*1024*5,
@@ -39,7 +32,7 @@ def set_log(path=None,level='DEBUG'):
             },
             'loggers':{
                 '':{
-                    'handlers': ['rotfile' ], # 'console',
+                    'handlers': ['rotfile' ,'console'] if is_debug else ['rotfile'] , # 'console',
                     'level': level,
                     'propagate': True,  
                 },
