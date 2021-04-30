@@ -1,6 +1,9 @@
 import os
 import time
 import errno
+import threading
+import logging
+general_log = logging.getLogger('general_log')
 
 class FileLockException(Exception):
     pass
@@ -35,6 +38,8 @@ class FileLock(object):
             try:
                 self.fd = os.open(self.lockfile, os.O_CREAT|os.O_EXCL|os.O_RDWR)
                 self.is_locked = True #moved to ensure tag only when locked
+                self.t = threading.Thread(target=self.beatTouch,args=() )
+                self.t.start()
                 break;
             except OSError as e:
                 if e.errno != errno.EEXIST:
@@ -45,10 +50,24 @@ class FileLock(object):
                     pass
                 elif (time.time() - start_time) >= self.timeout:
                     raise FileLockException("Timeout occured.")
+                self.checkTime()
                 time.sleep(self.delay)
 #        self.is_locked = True
-
-
+    
+    def checkTime(self):
+        tm = os.path.getmtime(self.lockfile)
+        if time.time() - tm > 2:
+            os.remove(self.lockfile)
+            general_log.debug('remove Lockfile %s'%self.lockfile )
+            
+        
+    def beatTouch(self):
+        while self.is_locked:
+            os.utime(self.lockfile)
+            #general_log.debug('beat touch Lockfile %s'%self.lockfile )
+            time.sleep(0.5)
+    
+        
     def release(self):
         """ Get rid of the lock by deleting the lockfile. 
             When working in a `with` statement, this gets automatically 
