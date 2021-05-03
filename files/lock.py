@@ -2,6 +2,7 @@ import os
 import time
 import errno
 import threading
+from pathlib import Path
 import logging
 general_log = logging.getLogger('general_log')
 
@@ -50,20 +51,25 @@ class FileLock(object):
                     pass
                 elif (time.time() - start_time) >= self.timeout:
                     raise FileLockException("Timeout occured.")
-                self.checkTime()
+                try:
+                    self.checkTime()
+                except Exception:
+                    # 某时self.lockfile被另外进程删除，运行到这里刚好文件已经不存在了
+                    pass
                 time.sleep(self.delay)
 #        self.is_locked = True
     
     def checkTime(self):
         tm = os.path.getmtime(self.lockfile)
-        if time.time() - tm > 10:
+        if time.time() - tm > 5:
             os.remove(self.lockfile)
             general_log.debug('remove Lockfile %s'%self.lockfile )
             
         
     def beatTouch(self):
         while self.is_locked:
-            os.utime(self.lockfile)
+            #os.utime(self.lockfile)
+            Path(self.lockfile).touch()
             #general_log.debug('beat touch Lockfile %s'%self.lockfile )
             time.sleep(0.5)
     
