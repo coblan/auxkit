@@ -56,7 +56,7 @@ class FileLock(object):
     
     def checkTime(self):
         tm = os.path.getmtime(self.lockfile)
-        if time.time() - tm > 2:
+        if time.time() - tm > 10:
             os.remove(self.lockfile)
             general_log.debug('remove Lockfile %s'%self.lockfile )
             
