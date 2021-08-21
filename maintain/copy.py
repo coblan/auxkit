@@ -16,7 +16,10 @@ def git_copy(src,dst,temp_dir=base_dir):
         zip_ref.extractall(dst)
 
 
-def copy(src_root,target_root,filters=[],overwrite=True):
+def copy(src_root,target_root,filters=[],overwrite="always"):
+    """
+    @overwrite:"always","check_updatetime","no_overwrite"
+    """
     #src_root = r'D:\work\H5\dist'
     #target_root = r'D:\work\Release\Live-Binary\H5\dist'
 
@@ -35,13 +38,18 @@ def copy(src_root,target_root,filters=[],overwrite=True):
                 except Exception:
                     pass
                 target_path = os.path.join(target_root, rel_path, fl)
-                if not overwrite:
-                    if not os.path.exists(target_path):
-                        shutil.copy(fl_path, target_path)
-                        print(target_path)
-                else:
-                    shutil.copy(fl_path, target_path)
+                if overwrite =='always':
+                    shutil.copy2(fl_path, target_path)
                     print(target_path)
+                elif not os.path.exists(target_path):
+                    shutil.copy2(fl_path, target_path)
+                    print(target_path) 
+                elif overwrite =='no_overwrite':
+                    pass
+                elif overwrite =='check_updatetime':
+                    if os.path.getmtime(fl_path) > os.path.getmtime(target_path):
+                        shutil.copy2(fl_path, target_path)
+                        print(target_path)                         
         
         # 去掉不要的dir
         left_dirs = []
@@ -57,6 +65,7 @@ def copy(src_root,target_root,filters=[],overwrite=True):
         for d in dirs:
             target_dir_path = os.path.join(target_root, rel_path, d)
             if not os.path.exists(target_dir_path):
+                # 文件夹也可以 shutil.copy2 拷贝，但是考虑到文件夹对文件没影响，所以暂时不管这里。
                 os.makedirs(target_dir_path)
                 print(target_dir_path)
 
