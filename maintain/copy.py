@@ -8,10 +8,10 @@ local = invoke.Context()
 base_dir = os.path.dirname(__file__)
 
 def git_copy(src,dst,temp_dir=base_dir):
-    tmp_fl_path = os.path.join(base_dir,'git_copy_tmp.zip')
+    tmp_fl_path = os.path.join(temp_dir,'git_copy_tmp.zip')
     with local.cd(src):
         local.run(r'git archive -o %(tmp_fl_path)s HEAD'%locals())
-    
+    shutil.rmtree(dst)
     with zipfile.ZipFile(tmp_fl_path, 'r') as zip_ref:
         zip_ref.extractall(dst)
 
