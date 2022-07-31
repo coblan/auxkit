@@ -74,7 +74,7 @@ def hide(driver,selector,timeout=60*5):
     )  
 
 def inputText(driver,selector,text):
-    inputele = driver.find_elements_by_css_selector(selector)[0]
+    inputele = driver.find_element(By.CSS_SELECTOR,selector)
     if not inputele.get_property('disabled'):
         #inputele.clear()
         clear_input(inputele)
@@ -94,11 +94,11 @@ def click(driver,selector=None,eid=None):
     if eid:
         btn = driver.find_element_by_id(eid)
     else:
-        btn = driver.find_elements_by_css_selector(selector)[0]
+        btn = driver.find_element(By.CSS_SELECTOR,selector)
     btn.click()
 
 def find_one_by_text(driver,selector,text):
-    for ii in driver.find_elements_by_css_selector(selector):
+    for ii in driver.find_elements(By.CSS_SELECTOR,selector):
         if text in ii.text:
             return ii
 
