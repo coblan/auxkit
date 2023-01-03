@@ -1,23 +1,30 @@
 from auxkit.maintain.fab.copy import big_remote_copy
+import invoke
+local = invoke.Context()
 
 class DjangoSite(object):
-    def __init__(self,server,project_name,uwsgi,nginx):
+    def __init__(self,server,project_name,server_path=None):
         self.server = server
         self.project_name=project_name
-        self.uwsgi= uwsgi
-        self.nginx=nginx
+        self.server_path = server_path or f'/pypro/{project_name}'
+        #self.uwsgi= uwsgi
+        #self.nginx=nginx
     
-    def createDocker(self):
+    def createDocker(self, uwsgi):
         print(f'创建{self.project_name}的docker容器，并且执行')
         self.server.run(f'docker run -itd -v /pypro/{self.project_name}:/pypro/{self.project_name} --name {self.project_name} coblan/py38_sqlserver:v10 /bin/bash'
                         ,pty=True)
         self.server.run(f'docker start {self.project_name}')
-        self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{self.uwsgi}') 
+        self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}') 
     
-    def makeNginx(self):
+    def makeNginx(self, nginx, sudopassword):
         print(f'创建{self.project_name}的nginx配置')
         with self.server.cd('/etc/nginx/sites-enabled'):
-            self.server.run(f'ln -s /pypro/{self.project_name}/deploy/{self.nginx} {self.nginx}')
+            #self.server.run(f'ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx}')
+            self.server.run(f'''sudo -S ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx} <<EOF
+          {sudopassword}
+          <<EOF''')            
+            
     def initSiteDir(self):
         print(f'创建{self.project_name}的必要文件夹')
         self.server.run(f'mkdir /pypro/{self.project_name}')
@@ -34,5 +41,41 @@ class DjangoSite(object):
         
     def importDb(self):
         pass
+    
+    def createMysql(self):
+        pass
+    
+    def uploadFile(self,local_path, package, auxkit=False):
+        """
+        package=['src/helpers']
+        """
+        server_path = self.server_path
+        print('git 打包当前分支')
+        with local.cd(local_path):
+            local.run(r'git archive -o d:\tmp\src.tar.gz HEAD')
+        for pak in package:
+            with local.cd(fr'{local_path}\src\{pak}'):
+                local.run(fr'git archive -o d:\tmp\{pak}.tar.gz HEAD')
+        if auxkit:
+            with local.cd(fr'{local_path}\script\auxkit'):
+                local.run(r'git archive -o d:\tmp\auxkit.tar.gz HEAD')  
+                
+        print('上传打包文件')
+        self.server.put(fr'D:\tmp\src.tar.gz','/tmp/src.tar.gz')
+        for pak in package:
+            self.server.put(fr'D:\tmp\{pak}.tar.gz',f'/tmp/{pak}.tar.gz' ,)
+        if auxkit:
+            self.server.put(fr'D:\tmp\auxkit.tar.gz','/tmp/auxkit.tar.gz' ,)
+         
+        print('解压文件')
+        self.server.run(f"tar  xvf /tmp/src.tar.gz -C {server_path}")
+        for pak in package:
+            self.server.run(f"tar  xvf /tmp/{pak}.tar.gz -C {server_path}/src/{pak}")
+        if auxkit:
+            self.server.run(f"tar  xvf /tmp/auxkit.tar.gz -C {server_path}/script/auxkit")
+    
+    
+    def createSettings(self, settings):
+        self.server.run(f' echo "from . {settings} import *" >> {self.server_path}/src/settings/__init__.py')
     
         
