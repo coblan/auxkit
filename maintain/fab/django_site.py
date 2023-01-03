@@ -15,7 +15,8 @@ class DjangoSite(object):
         self.server.run(f'docker run -itd -v /pypro/{self.project_name}:/pypro/{self.project_name} --name {self.project_name} coblan/py38_sqlserver:v10 /bin/bash'
                         ,pty=True)
         self.server.run(f'docker start {self.project_name}')
-        self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}') 
+        self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
+        
     
     def makeNginx(self, nginx, sudopassword):
         print(f'创建{self.project_name}的nginx配置')
