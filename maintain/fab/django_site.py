@@ -18,13 +18,14 @@ class DjangoSite(object):
         self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
         
     
-    def makeNginx(self, nginx, sudopassword):
+    def makeNginx(self, nginx, sudopassword=''):
         print(f'创建{self.project_name}的nginx配置')
         with self.server.cd('/etc/nginx/sites-enabled'):
             #self.server.run(f'ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx}')
             self.server.run(f'''sudo -S ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx} <<EOF
           {sudopassword}
-          <<EOF''')            
+          <<EOF''')        
+                   
             
     def initSiteDir(self):
         print(f'创建{self.project_name}的必要文件夹')
