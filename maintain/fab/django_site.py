@@ -40,7 +40,10 @@ class DjangoSite(object):
     def copyMedia(self,src_server,src_password):
         print(f'创建{self.project_name}的media文件')
         big_remote_copy(src_server, f'/pypro/{self.project_name}/media', self.server, f'/pypro/{self.project_name}/media', src_password)
-        
+    
+    def reload(self):
+        with self.server.cd(self.server_path):
+            self.server.run(f'touch run/{self.project_name}.reload')        
     def importDb(self):
         pass
     
