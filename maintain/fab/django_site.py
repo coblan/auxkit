@@ -16,7 +16,9 @@ class DjangoSite(object):
                         ,pty=True)
         self.server.run(f'docker start {self.project_name}')
         self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
-        
+    
+    #def createSuperUser(self):
+        #self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
     
     def makeNginx(self, nginx, sudopassword=''):
         print(f'创建{self.project_name}的nginx配置')
