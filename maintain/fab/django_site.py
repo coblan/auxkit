@@ -85,4 +85,23 @@ class DjangoSite(object):
     def createSettings(self, settings):
         self.server.run(f' echo "from . {settings} import *" >> {self.server_path}/src/settings/__init__.py')
     
+    def hardReload(self,uwsgi,sudo=None):
+        if sudo:
+            self.server.run(f'sudo docker restart {self.project_name}')
+            self.server.run(f'sudo docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')  
+        else:
+            self.server.run(f'docker restart {self.project_name}')
+            self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
+    
+    def startCelery(self,autoscale='10,3',soft_time_limit=None,sudo=None):
+        """
+        """
+        cmd = f'docker exec -w /pypro/{self.project_name}/src {self.project_name}  /pypro/p3dj11/bin/celery -A settings worker -l info  --detach --logfile=../log/celery.log'
+        if sudo:
+            cmd = 'sudo '+cmd
+        if soft_time_limit:
+            cmd += f' --soft-time-limit {soft_time_limit}'
+        self.server.run(cmd)
+
+    
         
