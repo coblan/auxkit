@@ -93,14 +93,16 @@ class DjangoSite(object):
             self.server.run(f'docker restart {self.project_name}')
             self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
     
-    def startCelery(self,autoscale='10,3',soft_time_limit=None,sudo=None):
+    def startCelery(self,autoscale='10,3',soft_time_limit=None,sudo=None,queue=None):
         """
         """
-        cmd = f'docker exec -w /pypro/{self.project_name}/src {self.project_name}  /pypro/p3dj11/bin/celery -A settings worker -l info  --detach --logfile=../log/celery.log'
+        cmd = f'docker exec -w /pypro/{self.project_name}/src {self.project_name}  /pypro/p3dj11/bin/celery -A settings worker -l info --autoscale={autoscale}  --detach --logfile=../log/celery.log'
         if sudo:
             cmd = 'sudo '+cmd
         if soft_time_limit:
             cmd += f' --soft-time-limit {soft_time_limit}'
+        if queue:
+            cmd += f' -Q {queue}'
         self.server.run(cmd)
 
     
