@@ -45,7 +45,11 @@ class DjangoSite(object):
     
     def reload(self):
         with self.server.cd(self.server_path):
-            self.server.run(f'touch run/{self.project_name}.reload')        
+            self.server.run(f'touch run/{self.project_name}.reload')
+            
+    def migrate(self):
+        self.server.run(f'sudo docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py migrate') 
+        
     def importDb(self):
         pass
     
