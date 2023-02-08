@@ -2,6 +2,25 @@ from auxkit.maintain.fab.copy import big_remote_copy
 import invoke
 local = invoke.Context()
 
+class MysqlProcess(object):
+    def __init__(self,server,user,password,db_name):
+        self.server = server
+        self.user = user
+        self.password = password
+        self.db_name = db_name
+    
+    def exportDb(self):
+        cmd = f'docker exec mysql8 mysqldump --column-statistics=0 -u {self.user} -p{self.password} {self.db_name} >{self.db_name}.sql'
+        self.server.run(cmd) 
+    
+    def copyToLocal(self):
+        self.server.get(f'{self.db_name}.sql',fr'd:/tmp/{self.db_name}.sql')
+    
+    def importToLocal(self,local_db_name,local_container_name='mysql8_1'):
+        local.run(fr'docker cp d:/tmp/{self.db_name}.sql {local_container_name}:/home/{self.db_name}.sql')
+        cmd = fr'docker exec {local_container_name} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 {local_db_name}</home/{self.db_name}.sql'
+        local.run(cmd)
+
 class DjangoSite(object):
     def __init__(self,server,project_name,server_path=None):
         self.server = server
@@ -52,6 +71,10 @@ class DjangoSite(object):
         
     def importDb(self):
         pass
+    
+    def exportDb(self):
+        cmd = f'docker exec mysql8 mysqldump --column-statistics=0 -u {user} -p{pswd} {mysqldb} >{mysqldb}.sql'
+        self.server.run(cmd)
     
     def createMysql(self):
         pass
