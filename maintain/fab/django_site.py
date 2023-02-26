@@ -39,9 +39,13 @@ class DjangoSite(object):
     #def createSuperUser(self):
         #self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
     
-    def makeNginx(self, nginx, sudopassword=''):
+    def makeNginx(self, nginx,path='/etc/nginx/sites-enabled', sudopassword=''):
+        """
+        path='/etc/nginx/sites-enabled'  是ubuntu的默认的路径
+        path='/etc/nginx/conf.d'   是centos7的默认路径
+        """
         print(f'创建{self.project_name}的nginx配置')
-        with self.server.cd('/etc/nginx/sites-enabled'):
+        with self.server.cd(path):
             #self.server.run(f'ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx}')
             self.server.run(f'''sudo -S ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx} <<EOF
           {sudopassword}
