@@ -18,8 +18,14 @@ class MysqlProcess(object):
     
     def importToLocal(self,local_db_name,local_container_name='mysql8_1'):
         local.run(fr'docker cp d:/tmp/{self.db_name}.sql {local_container_name}:/home/{self.db_name}.sql')
-        cmd = fr'docker exec {local_container_name} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 {local_db_name}</home/{self.db_name}.sql'
+        cmd = fr'docker exec {local_container_name} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 {local_db_name}</home/{self.db_name}.sql"'
         local.run(cmd)
+        
+    def importToServer(self,container='mysql8'):
+        self.server.put(fr'd:/tmp/{self.db_name}.sql',fr'/tmp/{self.db_name}.sql')
+        self.server.run(fr'docker cp /tmp/{self.db_name}.sql {container}:/tmp/{self.db_name}.sql')
+        cmd = fr'docker exec {container} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 {self.db_name}</tmp/{self.db_name}.sql"'
+        self.server.run(cmd)        
 
 class DjangoSite(object):
     def __init__(self,server,project_name,server_path=None):
@@ -66,6 +72,12 @@ class DjangoSite(object):
         print(f'创建{self.project_name}的media文件')
         big_remote_copy(src_server, f'/pypro/{self.project_name}/media', self.server, f'/pypro/{self.project_name}/media', src_password)
     
+    def downLoadMedia(self):
+        print('打包文件')
+        self.server.run(f'tar -h -zcvf /tmp/media.tar.gz {self.server_path}/media',hide ='out')
+        print('下载文件')
+        self.server.get('/tmp/media.tar.gz','d:/tmp/media.tar.gz')
+        
     def reload(self):
         with self.server.cd(self.server_path):
             self.server.run(f'touch run/{self.project_name}.reload')
@@ -73,15 +85,9 @@ class DjangoSite(object):
     def migrate(self):
         self.server.run(f'sudo docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py migrate') 
         
-    def importDb(self):
-        pass
-    
     def exportDb(self):
         cmd = f'docker exec mysql8 mysqldump --column-statistics=0 -u {user} -p{pswd} {mysqldb} >{mysqldb}.sql'
         self.server.run(cmd)
-    
-    def createMysql(self):
-        pass
     
     def uploadFile(self,local_path, package, auxkit=False):
         """
