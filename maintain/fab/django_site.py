@@ -130,12 +130,12 @@ class DjangoSite(object):
             self.server.run(f'docker restart {self.project_name}')
             self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
     
-    def startCelery(self,autoscale='10,3',soft_time_limit=None,sudo=None,queue=None):
+    def startCelery(self,autoscale='10,3',soft_time_limit=None,sudo=None,worker='worker',queue=None):#
         """
+        多台运行时，需要制定Q
         """
-        #cmd = f'docker exec -w /pypro/{self.project_name}/src {self.project_name}  /pypro/p3dj11/bin/celery -A settings worker -l info --autoscale={autoscale}  --detach --logfile=../log/celery.log'
-        cmd = f'docker exec -w /pypro/{self.project_name}/src {self.project_name}  /pypro/p3dj11/bin/celery multi start -A settings worker -l info  --autoscale={autoscale} --logfile=../log/celery.log --pidfile=/var/run/celery/%n.pid'
-        
+        #cmd = f'docker exec -w /pypro/{self.project_name}/src {self.project_name}  /pypro/p3dj11/bin/celery -A settings worker -l info --autoscale={autoscale}  --detach --logfile=../log/celery.log' --pidfile=/var/run/celery/%n.pid
+        cmd = f'docker exec -w /pypro/{self.project_name}/src {self.project_name}  /pypro/p3dj11/bin/celery multi start -A settings {worker} -l info  --autoscale={autoscale} --logfile=../log/celery.log --pidfile=/var/run/celery/%n.pid'
         if sudo:
             cmd = 'sudo '+cmd
         if soft_time_limit:
@@ -144,10 +144,10 @@ class DjangoSite(object):
             cmd += f' -Q {queue}'
         self.server.run(cmd)
     
-    def restartCelery(self,autoscale='10,3',soft_time_limit=None,sudo=None,queue=None):
+    def restartCelery(self,autoscale='10,3',soft_time_limit=None,sudo=None,worker="worker",queue=None):#
         """
         """
-        cmd = f'docker exec -w /pypro/{self.project_name}/src {self.project_name}  /pypro/p3dj11/bin/celery multi restart  -A settings worker -l info  --autoscale={autoscale} --logfile=../log/celery.log --pidfile=/var/run/celery/%n.pid'
+        cmd = f'docker exec -w /pypro/{self.project_name}/src {self.project_name}  /pypro/p3dj11/bin/celery multi restart  -A settings {worker} -l info  --autoscale={autoscale} --logfile=../log/celery.log --pidfile=/var/run/celery/%n.pid'
         
         if sudo:
             cmd = 'sudo '+cmd
