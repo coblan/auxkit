@@ -8,6 +8,7 @@ class MysqlProcess(object):
         self.user = user
         self.password = password
         self.db_name = db_name
+        
     
     def exportDb(self):
         cmd = f'docker exec mysql8 mysqldump --column-statistics=0 -u {self.user} -p{self.password} {self.db_name} >{self.db_name}.sql'
@@ -34,6 +35,9 @@ class DjangoSite(object):
         self.server_path = server_path or f'/pypro/{project_name}'
         #self.uwsgi= uwsgi
         #self.nginx=nginx
+    
+    def pullDocker(self):
+        self.server.run('docker pull coblan/py38_sqlserver:v10')
     
     def createDocker(self, uwsgi):
         print(f'创建{self.project_name}的docker容器，并且执行')
