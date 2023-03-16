@@ -22,8 +22,11 @@ class MysqlProcess(object):
         cmd = fr'docker exec {local_container_name} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 {local_db_name}</home/{self.db_name}.sql"'
         local.run(cmd)
         
-    def importToServer(self,container='mysql8'):
-        self.server.put(fr'd:/tmp/{self.db_name}.sql',fr'/tmp/{self.db_name}.sql')
+    def importToServer(self,container='mysql8',local_path=None):
+        if local_path:
+            self.server.put(local_path,fr'/tmp/{self.db_name}.sql')
+        else:
+            self.server.put(fr'd:/tmp/{self.db_name}.sql',fr'/tmp/{self.db_name}.sql')
         self.server.run(fr'docker cp /tmp/{self.db_name}.sql {container}:/tmp/{self.db_name}.sql')
         cmd = fr'docker exec {container} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 {self.db_name}</tmp/{self.db_name}.sql"'
         self.server.run(cmd)        
