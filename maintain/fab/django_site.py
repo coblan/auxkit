@@ -137,6 +137,15 @@ class DjangoSite(object):
             self.server.run(f'docker restart {self.project_name}')
             self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
     
+    def stop(self,sudo=None):
+        if sudo:
+            self.server.run(f'sudo docker stop {self.project_name}')
+        else:
+            self.server.run(f'docker stop {self.project_name}')
+            
+    def start(self):
+        self.server.run(f'docker start {self.project_name}')
+    
     def startCelery(self,autoscale='10,3',soft_time_limit=None,sudo=None,worker='worker',queue=None):#
         """
         多台运行时，需要制定Q
