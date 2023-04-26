@@ -96,8 +96,10 @@ class DjangoSite(object):
         cmd = f'docker exec mysql8 mysqldump --column-statistics=0 -u {user} -p{pswd} {mysqldb} >{mysqldb}.sql'
         self.server.run(cmd)
     
-    def uploadFile(self,local_path, package, auxkit=False):
+    def uploadFile(self,local_path, package:list, auxkit=False,):#logrotate=False
+        
         """
+        上传本地压缩包到服务器。需要制定package
         package=['src/helpers']
         """
         server_path = self.server_path
@@ -124,6 +126,9 @@ class DjangoSite(object):
             self.server.run(f"tar  xvf /tmp/{pak}.tar.gz -C {server_path}/src/{pak}")
         if auxkit:
             self.server.run(f"tar  xvf /tmp/auxkit.tar.gz -C {server_path}/script/auxkit")
+        
+        #if logrotate:
+            #self.chmodLogrotateConfig()
     
     
     def createSettings(self, settings):
@@ -173,5 +178,15 @@ class DjangoSite(object):
         if queue:
             cmd += f' -Q {queue}'
         self.server.run(cmd)
+    
+    def chmodLogrotateConfig(self):
+        """
+        修改logrotate的权限，否则无法运行。现在移到python manage.py jb_admin.logrotate里面去执行了。所以这个函数不用再调用了。
+        """
+        cmd = f'sudo docker exec -w /pypro/{self.project_name} {self.project_name}  chmod 600 deploy/logrotate.conf'
+        self.server.run(cmd)
+        cmd = f'sudo docker exec -w /pypro/{self.project_name} {self.project_name}  chown root deploy/logrotate.conf'
+        self.server.run(cmd)
+        
     
         
