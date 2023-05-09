@@ -14,6 +14,11 @@ class MysqlProcess(object):
         cmd = f'docker exec mysql8 mysqldump --column-statistics=0 -u {self.user} -p{self.password} {self.db_name} >{self.db_name}.sql'
         self.server.run(cmd) 
     
+    def localExport(self,db_name,user='root',password='root53356',local_container_name='mysql8_1'):
+        cmd = f'docker exec {local_container_name} /bin/bash -c "mysqldump --column-statistics=0 -u {user} -p{password} {db_name} >/tmp/{db_name}.sql"'
+        local.run(cmd) 
+        local.run(fr'docker cp {local_container_name}:/tmp/{db_name}.sql d:/tmp/{db_name}.sql ')
+    
     def copyToLocal(self):
         self.server.get(f'{self.db_name}.sql',fr'd:/tmp/{self.db_name}.sql')
     
