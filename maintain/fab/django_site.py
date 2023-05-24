@@ -1,7 +1,8 @@
 from auxkit.maintain.fab.copy import big_remote_copy
 import invoke
 local = invoke.Context()
-
+import shutil
+import tarfile
 class MysqlProcess(object):
     def __init__(self,server,user,password,db_name):
         self.server = server
@@ -88,11 +89,16 @@ class DjangoSite(object):
         print(f'创建{self.project_name}的media文件')
         big_remote_copy(src_server, f'/pypro/{self.project_name}/media', self.server, f'/pypro/{self.project_name}/media', src_password)
     
-    def downLoadMedia(self):
+    def downLoadMedia(self,des_path=None):
         print('打包文件')
         self.server.run(f'tar -h -zcvf /tmp/media.tar.gz {self.server_path}/media',hide ='out')
         print('下载文件')
         self.server.get('/tmp/media.tar.gz','d:/tmp/media.tar.gz')
+        if des_path:
+            tf = tarfile.open('d:/tmp/media.tar.gz')
+            tf.extractall('d:/tmp/media')
+            shutil.rmtree(des_path)
+            shutil.move(f'd:/tmp/media/{self.server_path}/media/',des_path)
         
     def reload(self):
         with self.server.cd(self.server_path):
