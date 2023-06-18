@@ -34,6 +34,10 @@ def big_remote_copy(src_server,  src_path, target_server,target_path,src_passwor
         sudopass = Responder(
              pattern=r'password:',
              response=f'{src_password}\n')
+        fingerprint = Responder(
+            pattern=r'fingerprint',
+            response='yes\n'
+        )
         
         for item in outls[1:]:
             ls = item.split(' ')
@@ -57,13 +61,13 @@ def big_remote_copy(src_server,  src_path, target_server,target_path,src_passwor
                 src_server.run(f'tar -h -zcvf /tmp/transfer/{item.get("name")}.tar.gz {item.get("name")}',hide ='out')
                 print(f'下载{item.get("name")}')
                 scp_cmd = f'scp {src_server.user}@{src_server.host}:/tmp/transfer/{item.get("name")}.tar.gz /tmp/recieve/{item.get("name")}.tar.gz'
-                target_server.run(scp_cmd,pty=True, watchers=[sudopass])
+                target_server.run(scp_cmd,pty=True, watchers=[sudopass,fingerprint])
                 untar = f'tar -zxvf /tmp/recieve/{item.get("name")}.tar.gz -C {target_path}'
                 target_server.run(untar)
             else:
                 print(f'下载{item.get("name")}')
                 scp_cmd= f'scp {src_server.user}@{src_server.host}:{src_path}/{item.get("name")}  {target_path}/{item.get("name")}'
-                target_server.run(scp_cmd,pty=True, watchers=[sudopass])
+                target_server.run(scp_cmd,pty=True, watchers=[sudopass,fingerprint])
 
             last_exclude.append(item.get("name"))
             print(f'已经下载: \n{last_exclude}')
