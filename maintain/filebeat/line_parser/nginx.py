@@ -6,6 +6,7 @@ import datetime
 import os
 import requests
 import sqlite3
+import urllib
 
 if os.environ.get('geo_db'):
     import geoip2.database
@@ -43,7 +44,8 @@ def nginx_path(lines):
         mt = re.search(pattern,messge)
         if mt :
             url = mt.group()
-            line['url'] = url
+            rt = urllib.parse.urlparse(url)
+            line['url'] = rt.path
             line['message'] = messge[:mt.start(0)] + messge[mt.end(0): ]
     return lines
 
