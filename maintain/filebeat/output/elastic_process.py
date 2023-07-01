@@ -9,7 +9,9 @@ def elasticesearch_process(host,user,pswd,index,self,lines):
     self.es.send(lines)
     
 class ELKProcess(ELKHander):
-
+    """
+    决定了index的样式
+    """
     def make_index(self):
         if self.es.info().get('version').get('number').startswith('7'):
             _index_mappings = {

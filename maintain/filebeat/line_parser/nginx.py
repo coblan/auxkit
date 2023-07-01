@@ -97,7 +97,7 @@ def ip_web_location(lines):
     "无缓存，则切换为web请求"
     db = os.environ.get('ip_db')
     if not db:
-        return
+        return lines
     conn = sqlite3.connect(db)
     c = conn.cursor()
     #url = 'http://ip-api.com/json/%s'
