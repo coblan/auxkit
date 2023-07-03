@@ -92,6 +92,9 @@ class DjangoSite(object):
         big_remote_copy(src_server, f'/pypro/{self.project_name}/media', self.server, f'/pypro/{self.project_name}/media', src_password)
     
     def downLoadMedia(self,des_path=None):
+        """
+        
+        """
         print('打包文件')
         self.server.run(f'tar -h -zcvf /tmp/media.tar.gz {self.server_path}/media',hide ='out')
         print('下载文件')
