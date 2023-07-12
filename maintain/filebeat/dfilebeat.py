@@ -88,7 +88,7 @@ def tail_file(path,self):
     if sys.platform=='win32':
         p = subprocess.Popen('tail -f %s'%path,stdout= subprocess.PIPE,shell=True)
     else:
-        p = subprocess.Popen('tail -F --lines=0%s'%path,stdout= subprocess.PIPE,shell=True)
+        p = subprocess.Popen('tail -F --lines=0 %s'%path,stdout= subprocess.PIPE,shell=True)
     #start_now = datetime.datetime.now()
     record = True
     while p.poll() is None:
