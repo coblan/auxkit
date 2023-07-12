@@ -4,6 +4,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common import exceptions
 import time
+import requests
+import hashlib
+import os
+import shutil
 
 def switch_to_title(driver,title):
     findList=[]
@@ -105,6 +109,44 @@ def find_one_by_text(driver,selector,text):
 def clear_input(ele):
     ele.send_keys(Keys.CONTROL + "a")
     ele.send_keys(Keys.DELETE)
+
+class MyDriver(object):
+    def __init__(self,driver):
+        self.driver = driver
+        self.has_pre_ex = False
     
+    def initJs(self):
+        from .selenium_inject_js import js
+        self.driver.execute_script(js)
+        self.has_pre_ex = True
+    
+    def downLoadDomSnapshot(self,selector,filename):
+        if not self.has_pre_ex:
+            self.initJs()
+            
+        self.driver.execute_async_script(r''' const callback = arguments[arguments.length - 1];
+            pre_ex.load_js("https://html2canvas.hertzen.com/dist/html2canvas.min.js").then(()=>{
+                callback()
+            })
+        ''' )
+        self.driver.execute_async_script( fr'''
+        const callback = arguments[arguments.length - 1];
+        html2canvas(document.querySelector("{selector}") ,{{
+                                          allowTaint: true,
+                                              useCORS: true                                          
+                                          }}).then( canvas => {{
+            pre_ex.downLoadCanvas(canvas,'{filename}')
+            callback()
+        }} )''' )    
+    
+    def findElements(self,selector):
+        return self.driver.find_elements(By.CSS_SELECTOR,value=selector)
+    
+
+
+        
+    
+    
+        
 
 

@@ -6,6 +6,7 @@ import datetime
 import os
 import requests
 import sqlite3
+import urllib
 
 if os.environ.get('geo_db'):
     import geoip2.database
@@ -43,7 +44,8 @@ def nginx_path(lines):
         mt = re.search(pattern,messge)
         if mt :
             url = mt.group()
-            line['url'] = url
+            rt = urllib.parse.urlparse(url)
+            line['url'] = rt.path
             line['message'] = messge[:mt.start(0)] + messge[mt.end(0): ]
     return lines
 
@@ -97,7 +99,7 @@ def ip_web_location(lines):
     "无缓存，则切换为web请求"
     db = os.environ.get('ip_db')
     if not db:
-        return
+        return lines
     conn = sqlite3.connect(db)
     c = conn.cursor()
     #url = 'http://ip-api.com/json/%s'

@@ -1,4 +1,6 @@
 from . elastic import ELKHander,helpers
+import logging
+general_log = logging.getLogger('general_log')
 
 class ELKNginx(ELKHander):
     def make_index(self):
@@ -54,4 +56,5 @@ class ELKNginx(ELKHander):
                         'city':line.get('city'),
                     }
             })
-        helpers.bulk(self.es, actions)
+        rt =helpers.bulk(self.es, actions)
+        general_log.debug( '%s %s'%(rt,self.__class__.__name__) )
