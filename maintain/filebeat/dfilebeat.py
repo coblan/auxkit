@@ -88,17 +88,18 @@ def tail_file(path,self):
     if sys.platform=='win32':
         p = subprocess.Popen('tail -f %s'%path,stdout= subprocess.PIPE,shell=True)
     else:
-        p = subprocess.Popen('tail -F %s'%path,stdout= subprocess.PIPE,shell=True)
-    start_now = datetime.datetime.now()
-    record = False
+        p = subprocess.Popen('tail -F --lines=0 %s'%path,stdout= subprocess.PIPE,shell=True)
+    #start_now = datetime.datetime.now()
+    record = True
     while p.poll() is None:
         line = p.stdout.readline()
         line_temp = line.strip()
-        if not record:
-            now = datetime.datetime.now()
-            if now- start_now > datetime.timedelta(seconds =2):
-                record = True
-                general_log.debug('start recording')
+        #if not record:
+            #now = datetime.datetime.now()
+            #if now- start_now > datetime.timedelta(seconds =2):
+                #record = True
+                #general_log.debug('start recording')
+        general_log.debug('start recording')
         if line_temp and record:
             self.cache_list.append( {'path':path,'message':line}  )
 
