@@ -16,5 +16,11 @@ class PostgreSqlProcess(MysqlProcess):
         cmd = fr'docker exec {local_container_name} psql -d {local_db_name} -f /home/{self.db_name}.sql'
         local.run(cmd)
         
-        
-              
+    def importToServer(self,container='mypostgre',local_path=None):
+        if local_path:
+            self.server.put(local_path,fr'/tmp/{self.db_name}.sql')
+        else:
+            self.server.put(fr'd:/tmp/{self.db_name}.sql',fr'/tmp/{self.db_name}.sql')
+        self.server.run(fr'docker cp /tmp/{self.db_name}.sql {container}:/tmp/{self.db_name}.sql')
+        cmd = fr'docker exec {container} psql -d {self.db_name} -f /tmp/{self.db_name}.sql'
+        self.server.run(cmd)  
