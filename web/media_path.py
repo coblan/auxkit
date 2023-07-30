@@ -6,7 +6,12 @@ import urllib
 
 class MediaAdapter(object):
     def __init__(self,path,media_path=None) :
+        """
+        @path: 保存文件的根目录，如 D:\work\part3\long\merchant_fish\media\popv
+        @media_path: /media/popv/   相对media的路径，注意最后有一个斜线。 如果不需要获取mediaPath，可以不用设置这个路径。
+        """
         self.path = path
+        self.media_path = media_path
         self.filename = ''
         try:
             os.makedirs(self.path)
