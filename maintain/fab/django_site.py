@@ -7,19 +7,20 @@ from . mysql_db import MysqlProcess
       
 
 class DjangoSite(object):
-    def __init__(self,server,project_name,server_path=None):
+    def __init__(self,server,project_name,server_path=None,image='coblan/py38_sqlserver:v10'):
         self.server = server
         self.project_name=project_name
         self.server_path = server_path or f'/pypro/{project_name}'
+        self.image = image
         #self.uwsgi= uwsgi
         #self.nginx=nginx
     
     def pullDocker(self):
-        self.server.run('docker pull coblan/py38_sqlserver:v10')
+        self.server.run(f'docker pull {self.image}')
     
     def createDocker(self, uwsgi):
         print(f'创建{self.project_name}的docker容器，并且执行')
-        self.server.run(f'docker run -itd -v /pypro/{self.project_name}:/pypro/{self.project_name} --name {self.project_name} coblan/py38_sqlserver:v10 /bin/bash'
+        self.server.run(f'docker run -itd -v /pypro/{self.project_name}:/pypro/{self.project_name} --name {self.project_name} {self.image} /bin/bash'
                         ,pty=True)
         self.server.run(f'docker start {self.project_name}')
         self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
