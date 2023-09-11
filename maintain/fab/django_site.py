@@ -4,7 +4,7 @@ local = invoke.Context()
 import shutil
 import tarfile
 from . mysql_db import MysqlProcess
-      
+from invoke import Responder
 
 class DjangoSite(object):
     def __init__(self,server,project_name,server_path=None,image='coblan/py38_sqlserver:v10'):
@@ -28,18 +28,32 @@ class DjangoSite(object):
     #def createSuperUser(self):
         #self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/uwsgi /pypro/{self.project_name}/deploy/{uwsgi}')
     
+    #def makeNginx(self, nginx,path='/etc/nginx/sites-enabled', sudopassword=''):
+        #"""
+        #path='/etc/nginx/sites-enabled'  是ubuntu的默认的路径
+        #path='/etc/nginx/conf.d'   是centos7的默认路径
+        #"""
+        #print(f'创建{self.project_name}的nginx配置')
+        #with self.server.cd(path):
+            ##self.server.run(f'ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx}')
+            #self.server.run(f'''sudo -S ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx} <<EOF
+          #{sudopassword}
+          #<<EOF''',encoding='utf-8')  
+            
     def makeNginx(self, nginx,path='/etc/nginx/sites-enabled', sudopassword=''):
         """
         path='/etc/nginx/sites-enabled'  是ubuntu的默认的路径
         path='/etc/nginx/conf.d'   是centos7的默认路径
         """
         print(f'创建{self.project_name}的nginx配置')
+
+        sudopass = Responder(
+             pattern=r'\[sudo\]',
+             response=f'{sudopassword}\n')
+    
         with self.server.cd(path):
-            #self.server.run(f'ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx}')
-            self.server.run(f'''sudo -S ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx} <<EOF
-          {sudopassword}
-          <<EOF''')        
-                   
+            self.server.run(f'sudo -S ln -s /pypro/{self.project_name}/deploy/{nginx} {nginx}', pty=True, watchers=[sudopass],encoding='utf-8')     
+     
             
     def initSiteDir(self):
         print(f'创建{self.project_name}的必要文件夹')
@@ -71,10 +85,10 @@ class DjangoSite(object):
         
     def reload(self):
         with self.server.cd(self.server_path):
-            self.server.run(f'touch run/{self.project_name}.reload')
+            self.server.run(f'touch run/{self.project_name}.reload',encoding='utf-8')
             
-    def migrate(self):
-        self.server.run(f'sudo docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py migrate') 
+    def migrate(self,sudo=True):
+        self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py migrate') 
     
     def manageRun(self,cmd):
         self.server.run(f'sudo docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py {cmd}') 
