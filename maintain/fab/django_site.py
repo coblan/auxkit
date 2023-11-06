@@ -7,7 +7,7 @@ from . mysql_db import MysqlProcess
 from invoke import Responder
 
 class DjangoSite(object):
-    def __init__(self,server,project_name,server_path=None,image='coblan/py38_sqlserver:v10'):
+    def __init__(self,server,project_name,server_path=None,image='coblan/py38_sqlserver:v13'):  # 以前是v10版本
         self.server = server
         self.project_name=project_name
         self.server_path = server_path or f'/pypro/{project_name}'
@@ -66,6 +66,12 @@ class DjangoSite(object):
         big_remote_copy(src_server, f'/pypro/{self.project_name}', self.server, f'/pypro/{self.project_name}', src_password)
     
     def copyMedia(self,src_server,src_password):
+        """
+        为了防止permission问题
+        把本地的 media文件夹，
+        chmod -R 777 media/          权限全部打开
+        chmod ubuntu -R media         归属为当前登录用户
+        """
         print(f'创建{self.project_name}的media文件')
         big_remote_copy(src_server, f'/pypro/{self.project_name}/media', self.server, f'/pypro/{self.project_name}/media', src_password)
     

@@ -11,6 +11,13 @@ class MysqlProcess(object):
         self.db_name = db_name
         
     
+    def rawExportDb(self):
+        """
+        从服务器导出数据库
+        """
+        cmd = f'mysqldump --column-statistics=0 -u {self.user} -p{self.password} {self.db_name} >{self.db_name}.sql'
+        self.server.run(cmd) 
+    
     def exportDb(self):
         """
         从服务器导出数据库
