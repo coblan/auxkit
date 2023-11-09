@@ -115,8 +115,9 @@ class DjangoSite(object):
         with local.cd(local_path):
             local.run(r'git archive -o d:\tmp\src.tar.gz HEAD')
         for pak in package:
+            pak_name = pak.replace('/','_')
             with local.cd(fr'{local_path}\src\{pak}'):
-                local.run(fr'git archive -o d:\tmp\{pak}.tar.gz HEAD')
+                local.run(fr'git archive -o d:\tmp\{pak_name}.tar.gz HEAD')
         if auxkit:
             with local.cd(fr'{local_path}\script\auxkit'):
                 local.run(r'git archive -o d:\tmp\auxkit.tar.gz HEAD')  
@@ -124,14 +125,16 @@ class DjangoSite(object):
         print('上传打包文件')
         self.server.put(fr'D:\tmp\src.tar.gz','/tmp/src.tar.gz')
         for pak in package:
-            self.server.put(fr'D:\tmp\{pak}.tar.gz',f'/tmp/{pak}.tar.gz' ,)
+            pak_name = pak.replace('/','_')
+            self.server.put(fr'D:\tmp\{pak_name}.tar.gz',f'/tmp/{pak_name}.tar.gz' ,)
         if auxkit:
             self.server.put(fr'D:\tmp\auxkit.tar.gz','/tmp/auxkit.tar.gz' ,)
          
         print('解压文件')
         self.server.run(f"tar  xvf /tmp/src.tar.gz -C {server_path}")
         for pak in package:
-            self.server.run(f"tar  xvf /tmp/{pak}.tar.gz -C {server_path}/src/{pak}")
+            pak_name = pak.replace('/','_')
+            self.server.run(f"tar  xvf /tmp/{pak_name}.tar.gz -C {server_path}/src/{pak}")
         if auxkit:
             self.server.run(f"tar  xvf /tmp/auxkit.tar.gz -C {server_path}/script/auxkit")
         
