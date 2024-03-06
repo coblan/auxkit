@@ -80,7 +80,8 @@ class DjangoSite(object):
         
         """
         print('打包文件')
-        self.server.run(f'tar -h -zcvf /tmp/media.tar.gz {self.server_path}/media',hide ='out')
+        with self.server.cd(f'{self.server_path}/media'):
+            self.server.run(f'tar -h -zcvf /tmp/media.tar.gz *',hide ='out')
         print('下载文件')
         self.server.get('/tmp/media.tar.gz','d:/tmp/media.tar.gz')
         if des_path:
@@ -88,7 +89,13 @@ class DjangoSite(object):
             tf.extractall('d:/tmp/media')
             shutil.rmtree(des_path)
             shutil.move(f'd:/tmp/media/{self.server_path}/media/',des_path)
-        
+    
+    
+    def localMediaToServer(self):
+        self.server.put('d:/tmp/media.tar.gz','/tmp/media.tar.gz')
+        untar = f'tar -zxvf /tmp/media.tar.gz -C /pypro/{self.project_name}/media/'
+        self.server.run(untar)
+    
     def reload(self):
         with self.server.cd(self.server_path):
             self.server.run(f'touch run/{self.project_name}.reload',encoding='utf-8')
