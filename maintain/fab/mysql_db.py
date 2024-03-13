@@ -32,6 +32,7 @@ class MysqlProcess(object):
         local.run(fr'docker cp {local_container_name}:/tmp/{db_name}.sql d:/tmp/{db_name}.sql ')
     
     def copyToLocal(self):
+        print(fr'拷贝文件到d:/tmp/{self.db_name}.sql')
         self.server.get(f'{self.db_name}.sql',fr'd:/tmp/{self.db_name}.sql')
     
     def importToLocal(self,local_db_name,local_container_name='mysql8_1'):

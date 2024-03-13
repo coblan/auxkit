@@ -5,6 +5,7 @@ import shutil
 import tarfile
 from . mysql_db import MysqlProcess
 from invoke import Responder
+import os
 
 class DjangoSite(object):
     def __init__(self,server,project_name,server_path=None,image='coblan/py38_sqlserver:v13'):  # 以前是v10版本
@@ -67,6 +68,7 @@ class DjangoSite(object):
     
     def copyMedia(self,src_server,src_password):
         """
+        直接在远程服务器1上面，从src_server拷贝media文件
         为了防止permission问题
         把本地的 media文件夹，
         chmod -R 777 media/          权限全部打开
@@ -75,16 +77,21 @@ class DjangoSite(object):
         print(f'创建{self.project_name}的media文件')
         big_remote_copy(src_server, f'/pypro/{self.project_name}/media', self.server, f'/pypro/{self.project_name}/media', src_password)
     
-    def downLoadMedia(self,des_path=None):
+    def downLoadMediaToLocal(self,des_path=None):
         """
-        
+        下载media文件到本地。
+        如果指定了des_path，则会解压到该路径(修改后未测试)
         """
-        print('打包文件')
+        print(f'打包媒体文件')
         with self.server.cd(f'{self.server_path}/media'):
             self.server.run(f'tar -h -zcvf /tmp/media.tar.gz *',hide ='out')
-        print('下载文件')
-        self.server.get('/tmp/media.tar.gz','d:/tmp/media.tar.gz')
+        print(f'下载媒体文件到d:/tmp/{self.project_name}_media.tar.gz')
+        self.server.get('/tmp/media.tar.gz',f'd:/tmp/{self.project_name}_media.tar.gz')
         if des_path:
+            if os.path.exists('d:/tmp/media'):
+                shutil.rmtree('d:/tmp/media')
+                
+            os.makedirs('d:/tmp/media')
             tf = tarfile.open('d:/tmp/media.tar.gz')
             tf.extractall('d:/tmp/media')
             shutil.rmtree(des_path)
@@ -92,7 +99,7 @@ class DjangoSite(object):
     
     
     def localMediaToServer(self):
-        self.server.put('d:/tmp/media.tar.gz','/tmp/media.tar.gz')
+        self.server.put(f'd:/tmp/{self.project_name}_media.tar.gz','/tmp/media.tar.gz')
         untar = f'tar -zxvf /tmp/media.tar.gz -C /pypro/{self.project_name}/media/'
         self.server.run(untar)
     
