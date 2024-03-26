@@ -118,6 +118,42 @@ class DjangoSite(object):
         cmd = f'docker exec mysql8 mysqldump --column-statistics=0 -u {user} -p{pswd} {mysqldb} >{mysqldb}.sql'
         self.server.run(cmd)
     
+    
+    def packageSrc(self,local_path, package:list, auxkit=False,):
+        server_path = self.server_path
+        print('git 打包当前分支')
+        with local.cd(local_path):
+            local.run(r'git archive -o d:\tmp\src.tar.gz HEAD')
+        for pak in package:
+            pak_name = pak.replace('/','_')
+            with local.cd(fr'{local_path}\src\{pak}'):
+                local.run(fr'git archive -o d:\tmp\{pak_name}.tar.gz HEAD')
+        if auxkit:
+            with local.cd(fr'{local_path}\script\auxkit'):
+                local.run(r'git archive -o d:\tmp\auxkit.tar.gz HEAD')  
+                
+        print(fr'存放打包文件到D:\tmp\package')
+        shutil.copy(fr'D:\tmp\src.tar.gz', fr'D:\tmp\package\src.tar.gz')
+        #self.server.put(fr'D:\tmp\src.tar.gz','/tmp/src.tar.gz')
+        for pak in package:
+            pak_name = pak.replace('/','_')
+            shutil.copy(fr'D:\tmp\{pak_name}.tar.gz', fr'D:\tmp\package\{pak_name}.tar.gz')
+            #self.server.put(fr'D:\tmp\{pak_name}.tar.gz',f'/tmp/{pak_name}.tar.gz' ,)
+        if auxkit:
+            shutil.copy(fr'D:\tmp\auxkit.tar.gz', fr'D:\tmp\package\auxkit.tar.gz')
+            #self.server.put(fr'D:\tmp\auxkit.tar.gz','/tmp/auxkit.tar.gz' ,)
+         
+        print('拷贝到/tmp文件夹,执行以下命令')
+        print(f"tar  xvf /tmp/src.tar.gz -C {server_path}")
+        #self.server.run(f"tar  xvf /tmp/src.tar.gz -C {server_path}")
+        for pak in package:
+            pak_name = pak.replace('/','_')
+            print(f"tar  xvf /tmp/{pak_name}.tar.gz -C {server_path}/src/{pak}")
+            #self.server.run(f"tar  xvf /tmp/{pak_name}.tar.gz -C {server_path}/src/{pak}")
+        if auxkit:
+            print(f"tar  xvf /tmp/auxkit.tar.gz -C {server_path}/script/auxkit")
+            #self.server.run(f"tar  xvf /tmp/auxkit.tar.gz -C {server_path}/script/auxkit")
+    
     def uploadFile(self,local_path, package:list, auxkit=False,):#logrotate=False
         
         """
