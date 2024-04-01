@@ -66,7 +66,7 @@ class DjangoSite(object):
     def copyFile(self,src_server,src_password):
         big_remote_copy(src_server, f'/pypro/{self.project_name}', self.server, f'/pypro/{self.project_name}', src_password)
     
-    def copyMedia(self,src_server,src_password):
+    def copyMedia(self,src_server,src_password,exclude=[]):
         """
         直接在远程服务器1上面，从src_server拷贝media文件
         为了防止permission问题
@@ -75,7 +75,7 @@ class DjangoSite(object):
         chmod ubuntu -R media         归属为当前登录用户
         """
         print(f'创建{self.project_name}的media文件')
-        big_remote_copy(src_server, f'/pypro/{self.project_name}/media', self.server, f'/pypro/{self.project_name}/media', src_password)
+        big_remote_copy(src_server, f'/pypro/{self.project_name}/media', self.server, f'/pypro/{self.project_name}/media', src_password,exclude=exclude)
     
     def downLoadMediaToLocal(self,des_path=None):
         """
