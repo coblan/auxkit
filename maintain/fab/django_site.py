@@ -229,6 +229,7 @@ class DjangoSite(object):
             cmd += f' --soft-time-limit={soft_time_limit}'
         if queue:
             cmd += f' -Q {queue}'
+        print(cmd)
         self.server.run(cmd)
     
     def restartCelery(self,autoscale='10,3',soft_time_limit=None,sudo=None,worker="worker",queue=None):#
