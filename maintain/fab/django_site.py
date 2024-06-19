@@ -8,7 +8,7 @@ from invoke import Responder
 import os
 
 class DjangoSite(object):
-    def __init__(self,server,project_name,server_path=None,image='coblan/py38_sqlserver:v13'):  # 以前是v10版本
+    def __init__(self,server,project_name,server_path=None,image='coblan/py38_sqlserver:v14'):  # 以前是v10版本
         self.server = server
         self.project_name=project_name
         self.server_path = server_path or f'/pypro/{project_name}'
