@@ -5,9 +5,10 @@ import shutil
 import tarfile
 from . mysql_db import MysqlProcess
 from invoke import Responder
+import os
 
 class DjangoSite(object):
-    def __init__(self,server,project_name,server_path=None,image='coblan/py38_sqlserver:v10'):
+    def __init__(self,server,project_name,server_path=None,image='coblan/py38_sqlserver:v14'):  # 以前是v10版本
         self.server = server
         self.project_name=project_name
         self.server_path = server_path or f'/pypro/{project_name}'
@@ -65,24 +66,43 @@ class DjangoSite(object):
     def copyFile(self,src_server,src_password):
         big_remote_copy(src_server, f'/pypro/{self.project_name}', self.server, f'/pypro/{self.project_name}', src_password)
     
-    def copyMedia(self,src_server,src_password):
+    def copyMedia(self,src_server,src_password,exclude=[]):
+        """
+        直接在远程服务器1上面，从src_server拷贝media文件
+        为了防止permission问题
+        把本地的 media文件夹，
+        chmod -R 777 media/          权限全部打开
+        chmod ubuntu -R media         归属为当前登录用户
+        """
         print(f'创建{self.project_name}的media文件')
-        big_remote_copy(src_server, f'/pypro/{self.project_name}/media', self.server, f'/pypro/{self.project_name}/media', src_password)
+        big_remote_copy(src_server, f'/pypro/{self.project_name}/media', self.server, f'/pypro/{self.project_name}/media', src_password,exclude=exclude)
     
-    def downLoadMedia(self,des_path=None):
+    def downLoadMediaToLocal(self,des_path=None):
         """
-        
+        下载media文件到本地。
+        如果指定了des_path，则会解压到该路径(修改后未测试)
         """
-        print('打包文件')
-        self.server.run(f'tar -h -zcvf /tmp/media.tar.gz {self.server_path}/media',hide ='out')
-        print('下载文件')
-        self.server.get('/tmp/media.tar.gz','d:/tmp/media.tar.gz')
+        print(f'打包媒体文件')
+        with self.server.cd(f'{self.server_path}/media'):
+            self.server.run(f'tar -h -zcvf /tmp/media.tar.gz *',hide ='out')
+        print(f'下载媒体文件到d:/tmp/{self.project_name}_media.tar.gz')
+        self.server.get('/tmp/media.tar.gz',f'd:/tmp/{self.project_name}_media.tar.gz')
         if des_path:
+            if os.path.exists('d:/tmp/media'):
+                shutil.rmtree('d:/tmp/media')
+                
+            os.makedirs('d:/tmp/media')
             tf = tarfile.open('d:/tmp/media.tar.gz')
             tf.extractall('d:/tmp/media')
             shutil.rmtree(des_path)
             shutil.move(f'd:/tmp/media/{self.server_path}/media/',des_path)
-        
+    
+    
+    def localMediaToServer(self):
+        self.server.put(f'd:/tmp/{self.project_name}_media.tar.gz','/tmp/media.tar.gz')
+        untar = f'tar -zxvf /tmp/media.tar.gz -C /pypro/{self.project_name}/media/'
+        self.server.run(untar)
+    
     def reload(self):
         with self.server.cd(self.server_path):
             self.server.run(f'touch run/{self.project_name}.reload',encoding='utf-8')
@@ -91,12 +111,53 @@ class DjangoSite(object):
         self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py migrate') 
     
     def manageRun(self,cmd):
-        self.server.run(f'sudo docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py {cmd}') 
+        """
+        创建superuser
+        site.manageRun('''shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('root', 'root@example.com', 'root123456789')"''')
+    
+        """
+        self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py {cmd}') 
         
     
     def exportDb(self):
         cmd = f'docker exec mysql8 mysqldump --column-statistics=0 -u {user} -p{pswd} {mysqldb} >{mysqldb}.sql'
         self.server.run(cmd)
+    
+    
+    def packageSrc(self,local_path, package:list, auxkit=False,):
+        server_path = self.server_path
+        print('git 打包当前分支')
+        with local.cd(local_path):
+            local.run(r'git archive -o d:\tmp\src.tar.gz HEAD')
+        for pak in package:
+            pak_name = pak.replace('/','_')
+            with local.cd(fr'{local_path}\src\{pak}'):
+                local.run(fr'git archive -o d:\tmp\{pak_name}.tar.gz HEAD')
+        if auxkit:
+            with local.cd(fr'{local_path}\script\auxkit'):
+                local.run(r'git archive -o d:\tmp\auxkit.tar.gz HEAD')  
+                
+        print(fr'存放打包文件到D:\tmp\package')
+        shutil.copy(fr'D:\tmp\src.tar.gz', fr'D:\tmp\package\src.tar.gz')
+        #self.server.put(fr'D:\tmp\src.tar.gz','/tmp/src.tar.gz')
+        for pak in package:
+            pak_name = pak.replace('/','_')
+            shutil.copy(fr'D:\tmp\{pak_name}.tar.gz', fr'D:\tmp\package\{pak_name}.tar.gz')
+            #self.server.put(fr'D:\tmp\{pak_name}.tar.gz',f'/tmp/{pak_name}.tar.gz' ,)
+        if auxkit:
+            shutil.copy(fr'D:\tmp\auxkit.tar.gz', fr'D:\tmp\package\auxkit.tar.gz')
+            #self.server.put(fr'D:\tmp\auxkit.tar.gz','/tmp/auxkit.tar.gz' ,)
+         
+        print('拷贝到/tmp文件夹,执行以下命令')
+        print(f"tar  xvf /tmp/src.tar.gz -C {server_path}")
+        #self.server.run(f"tar  xvf /tmp/src.tar.gz -C {server_path}")
+        for pak in package:
+            pak_name = pak.replace('/','_')
+            print(f"tar  xvf /tmp/{pak_name}.tar.gz -C {server_path}/src/{pak}")
+            #self.server.run(f"tar  xvf /tmp/{pak_name}.tar.gz -C {server_path}/src/{pak}")
+        if auxkit:
+            print(f"tar  xvf /tmp/auxkit.tar.gz -C {server_path}/script/auxkit")
+            #self.server.run(f"tar  xvf /tmp/auxkit.tar.gz -C {server_path}/script/auxkit")
     
     def uploadFile(self,local_path, package:list, auxkit=False,):#logrotate=False
         
@@ -109,8 +170,9 @@ class DjangoSite(object):
         with local.cd(local_path):
             local.run(r'git archive -o d:\tmp\src.tar.gz HEAD')
         for pak in package:
+            pak_name = pak.replace('/','_')
             with local.cd(fr'{local_path}\src\{pak}'):
-                local.run(fr'git archive -o d:\tmp\{pak}.tar.gz HEAD')
+                local.run(fr'git archive -o d:\tmp\{pak_name}.tar.gz HEAD')
         if auxkit:
             with local.cd(fr'{local_path}\script\auxkit'):
                 local.run(r'git archive -o d:\tmp\auxkit.tar.gz HEAD')  
@@ -118,14 +180,16 @@ class DjangoSite(object):
         print('上传打包文件')
         self.server.put(fr'D:\tmp\src.tar.gz','/tmp/src.tar.gz')
         for pak in package:
-            self.server.put(fr'D:\tmp\{pak}.tar.gz',f'/tmp/{pak}.tar.gz' ,)
+            pak_name = pak.replace('/','_')
+            self.server.put(fr'D:\tmp\{pak_name}.tar.gz',f'/tmp/{pak_name}.tar.gz' ,)
         if auxkit:
             self.server.put(fr'D:\tmp\auxkit.tar.gz','/tmp/auxkit.tar.gz' ,)
          
         print('解压文件')
         self.server.run(f"tar  xvf /tmp/src.tar.gz -C {server_path}")
         for pak in package:
-            self.server.run(f"tar  xvf /tmp/{pak}.tar.gz -C {server_path}/src/{pak}")
+            pak_name = pak.replace('/','_')
+            self.server.run(f"tar  xvf /tmp/{pak_name}.tar.gz -C {server_path}/src/{pak}")
         if auxkit:
             self.server.run(f"tar  xvf /tmp/auxkit.tar.gz -C {server_path}/script/auxkit")
         
@@ -170,6 +234,7 @@ class DjangoSite(object):
             cmd += f' --soft-time-limit={soft_time_limit}'
         if queue:
             cmd += f' -Q {queue}'
+        print(cmd)
         self.server.run(cmd)
     
     def restartCelery(self,autoscale='10,3',soft_time_limit=None,sudo=None,worker="worker",queue=None):#

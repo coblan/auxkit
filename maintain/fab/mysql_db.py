@@ -11,6 +11,13 @@ class MysqlProcess(object):
         self.db_name = db_name
         
     
+    def rawExportDb(self):
+        """
+        从服务器导出数据库
+        """
+        cmd = f'mysqldump --column-statistics=0 -u {self.user} -p{self.password} {self.db_name} >{self.db_name}.sql'
+        self.server.run(cmd) 
+    
     def exportDb(self):
         """
         从服务器导出数据库
@@ -25,6 +32,7 @@ class MysqlProcess(object):
         local.run(fr'docker cp {local_container_name}:/tmp/{db_name}.sql d:/tmp/{db_name}.sql ')
     
     def copyToLocal(self):
+        print(fr'拷贝文件到d:/tmp/{self.db_name}.sql')
         self.server.get(f'{self.db_name}.sql',fr'd:/tmp/{self.db_name}.sql')
     
     def importToLocal(self,local_db_name,local_container_name='mysql8_1'):
@@ -40,3 +48,16 @@ class MysqlProcess(object):
         self.server.run(fr'docker cp /tmp/{self.db_name}.sql {container}:/tmp/{self.db_name}.sql')
         cmd = fr'docker exec {container} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 {self.db_name}</tmp/{self.db_name}.sql"'
         self.server.run(cmd)  
+    
+    def runSql(self,sql_cmd,container='mysql8'):
+        cmd = fr'docker exec {container} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 -e \"{sql_cmd}\" "'
+        self.server.run(cmd) 
+        
+    def localRunSql(self,sql_cmd,local_container_name='mysql8_1'):
+        """
+        db.localRunSql('select now()')
+        db.localRunSql('DROP DATABASE usa_user')
+        db.localRunSql('CREATE DATABASE usa_user  CHARACTER SET utf8mb4  COLLATE utf8mb4_general_ci;')
+        """
+        cmd = fr'docker exec {local_container_name} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 -e \"{sql_cmd}\" "'
+        local.run(cmd)        

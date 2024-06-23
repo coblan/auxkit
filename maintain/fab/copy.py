@@ -72,3 +72,18 @@ def big_remote_copy(src_server,  src_path, target_server,target_path,src_passwor
             last_exclude.append(item.get("name"))
             print(f'已经下载: \n{last_exclude}')
 
+def remote_copy_file(src_server,  src_path, target_server,target_path,src_password):
+    """
+    直接在两个远程服务器上面用命令直接拷贝文件
+    """
+    sudopass = Responder(
+         pattern=r'password:',
+         response=f'{src_password}\n')
+    fingerprint = Responder(
+        pattern=r'fingerprint',
+        response='yes\n'
+    )
+    
+    scp_cmd= f'scp {src_server.user}@{src_server.host}:{src_path}  {target_path}'
+    target_server.run(scp_cmd,pty=True, watchers=[sudopass,fingerprint])
+    print(f'下载{src_path}完成')
