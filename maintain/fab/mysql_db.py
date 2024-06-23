@@ -48,3 +48,16 @@ class MysqlProcess(object):
         self.server.run(fr'docker cp /tmp/{self.db_name}.sql {container}:/tmp/{self.db_name}.sql')
         cmd = fr'docker exec {container} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 {self.db_name}</tmp/{self.db_name}.sql"'
         self.server.run(cmd)  
+    
+    def runSql(self,sql_cmd,container='mysql8'):
+        cmd = fr'docker exec {container} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 -e \"{sql_cmd}\" "'
+        self.server.run(cmd) 
+        
+    def localRunSql(self,sql_cmd,local_container_name='mysql8_1'):
+        """
+        db.localRunSql('select now()')
+        db.localRunSql('DROP DATABASE usa_user')
+        db.localRunSql('CREATE DATABASE usa_user  CHARACTER SET utf8mb4  COLLATE utf8mb4_general_ci;')
+        """
+        cmd = fr'docker exec {local_container_name} /bin/bash -c "mysql --host=localhost --port=3306 -u root -proot53356 -e \"{sql_cmd}\" "'
+        local.run(cmd)        

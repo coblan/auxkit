@@ -111,6 +111,11 @@ class DjangoSite(object):
         self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py migrate') 
     
     def manageRun(self,cmd):
+        """
+        创建superuser
+        site.manageRun('''shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('root', 'root@example.com', 'root123456789')"''')
+    
+        """
         self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py {cmd}') 
         
     
