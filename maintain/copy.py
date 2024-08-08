@@ -8,12 +8,22 @@ local = invoke.Context()
 base_dir = os.path.dirname(__file__)
 
 def git_copy(src,dst,temp_dir=base_dir):
+    """
+    利用git把src目录下的仓库，拷贝到dst目录下。
+    @src:git仓库文件夹，必须是git仓库。
+    @dst:打包出来的文件目的地。
+    
+    @temp_dir:打包出来的文件临时文件夹。
+    """
     tmp_fl_path = os.path.join(temp_dir,'git_copy_tmp.zip')
     with local.cd(src):
         local.run(r'git archive -o %(tmp_fl_path)s HEAD'%locals())
     shutil.rmtree(dst)
     with zipfile.ZipFile(tmp_fl_path, 'r') as zip_ref:
         zip_ref.extractall(dst)
+        
+    # 移除临时文件
+    os.remove(tmp_fl_path)
 
 
 def copy(src_root,target_root,filters=[],overwrite="always"):

@@ -6,6 +6,43 @@ import tarfile
 from . mysql_db import MysqlProcess
 from invoke import Responder
 import os
+import json
+
+class DifPro(object):
+    def getLastCommit(self,server,server_path):
+        try:
+            server.get(f'{server_path}/_lastcommit','d:/tmp/_lastcommit')
+            with open('d:/tmp/_lastcommit') as f:
+                dc = json.load(f)
+                return dc
+        except Exception as e:
+            print('为获取到lastcommit:',e)
+            return {}
+    
+    def writeLastCommit(self,dc):
+        with open('d:/tmp/_lastcommit','w') as f:
+            json.dump(dc,f)
+    
+    def currentCommit(self):
+        rt = local.run('git rev-parse HEAD')
+        current_commit = rt.stdout.strip('\n')
+        return current_commit
+    
+    def package(self,dest,last_commit):
+        if last_commit:
+            print(f'打包{dest}的{last_commit}')
+            rt = local.run(f'git diff --name-only {last_commit}')
+            files = rt.stdout.split('\n')
+            files = [x for x in files if x]
+            file_str = ' '.join(files)
+            if file_str:
+                print(f'变化文件:{files}')
+                local.run(fr'git archive -o {dest} HEAD {file_str}')   
+            else:
+                print(f'{dest}没有变化')
+        else:
+            print(f'未发现{dest}的last commit，打包全部')
+            local.run(fr'git archive -o {dest} HEAD')  
 
 class DjangoSite(object):
     def __init__(self,server,project_name,server_path=None,image='coblan/py38_sqlserver:v14'):  # 以前是v10版本
@@ -159,11 +196,81 @@ class DjangoSite(object):
             print(f"tar  xvf /tmp/auxkit.tar.gz -C {server_path}/script/auxkit")
             #self.server.run(f"tar  xvf /tmp/auxkit.tar.gz -C {server_path}/script/auxkit")
     
+    
+    def diffUpload(self,local_path, package:list,):
+        """
+        根据last_commit信息，只上传diff的文件。
+        
+        git rev-parse HEAD
+        """
+        pro = DifPro()
+        last_commit_dc = pro.getLastCommit(server=self.server, server_path=self.server_path)
+        current_commit_dc = {}
+        
+        if not last_commit_dc:
+            """
+            首次上传
+            """
+            print('采用全量上传方式')
+            with local.cd(local_path):
+                current_commit_dc['src']=pro.currentCommit()
+            for pak in package:
+                with local.cd(fr'{local_path}\src\{pak}'):
+                    current_commit_dc[pak]=pro.currentCommit()  
+            pro.writeLastCommit(current_commit_dc)
+            self.server.put('d:/tmp/_lastcommit',f'{self.server_path}/_lastcommit')
+            self.uploadFile(local_path, package)
+            return 
+            
+            
+        print('采用diff上传')
+        with local.cd(local_path):
+            current_commit_dc['src']=pro.currentCommit()
+            if current_commit_dc['src'] != last_commit_dc.get('src'):
+                pro.package(dest=r'd:\tmp\src.tar.gz',last_commit=last_commit_dc.get('src'))
+                print('上传src.tar.gz')
+                self.server.put(fr'D:\tmp\src.tar.gz','/tmp/src.tar.gz')
+                print('解压src.tar.gz')
+                self.server.run(f"tar  xvf /tmp/src.tar.gz -C {self.server_path}")
+            else:
+                print(f'src没有发生变化。')
+            
+        for pak in package:
+            with local.cd(fr'{local_path}\src\{pak}'):
+                current_commit_dc[pak]=pro.currentCommit()
+                if current_commit_dc[pak] != last_commit_dc.get(pak):
+                    pro.package(dest=fr'd:\tmp\{pak}.tar.gz', last_commit=last_commit_dc.get(pak))
+                    print(f'上传{pak}')
+                    self.server.put(fr'D:\tmp\{pak}.tar.gz',f'/tmp/{pak}.tar.gz' ,)
+                    print(f'解压{pak}')
+                    self.server.run(f"tar  xvf /tmp/{pak}.tar.gz -C {self.server_path}/src/{pak}")
+                else:
+                    print(f'{pak}没有发生变化')
+                
+        
+        pro.writeLastCommit(current_commit_dc)
+        
+        #print('上传打包文件')
+        #self.server.put(fr'D:\tmp\src.tar.gz','/tmp/src.tar.gz')
+        #for pak in package:
+            #self.server.put(fr'D:\tmp\{pak}.tar.gz',f'/tmp/{pak}.tar.gz' ,)
+        
+        
+        #print('解压文件')
+        #self.server.run(f"tar  xvf /tmp/src.tar.gz -C {server_path}")
+        #for pak in package:
+            #self.server.run(f"tar  xvf /tmp/{pak}.tar.gz -C {server_path}/src/{pak}")
+        
+        print('更新last commit')
+        self.server.put('d:/tmp/_lastcommit',f'{self.server_path}/_lastcommit')
+    
     def uploadFile(self,local_path, package:list, auxkit=False,):#logrotate=False
         
         """
         上传本地压缩包到服务器。需要制定package
         package=['src/helpers']
+        
+        @auxkit:老的参数，现在可以不传。auxkit直接放到package里面传。
         """
         server_path = self.server_path
         print('git 打包当前分支')
