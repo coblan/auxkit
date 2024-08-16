@@ -80,6 +80,9 @@ def copy(src_root,target_root,filters=[],overwrite="always"):
                 print(target_dir_path)
 
 class CopyDiff(object):
+    """
+    找一个中间文件夹进行对比，提取出diff的文件，再进行拷贝。使用了filecmp.cmp比较函数，进行了递归的比较，速度应该不快。
+    """
     def __init__(self, src_dir,cache_dir,dst_dir,filters=[]):
         self.src_dir=src_dir
         self.cache_dir = cache_dir
