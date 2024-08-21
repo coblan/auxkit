@@ -24,6 +24,7 @@ class DifPro(object):
             json.dump(dc,f)
     
     def currentCommit(self):
+        print('本地commit')
         rt = local.run('git rev-parse HEAD')
         current_commit = rt.stdout.strip('\n')
         return current_commit
