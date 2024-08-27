@@ -148,13 +148,16 @@ class DjangoSite(object):
     def migrate(self,sudo=True):
         self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py migrate') 
     
-    def manageRun(self,cmd):
+    def manageRun(self,cmd,docker_sudo=False):
         """
         创建superuser
         site.manageRun('''shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('root', 'root@example.com', 'root123456789')"''')
     
         """
-        self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py {cmd}') 
+        if docker_sudo:
+            self.server.run(f'sudo docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py {cmd}') 
+        else:
+            self.server.run(f'docker exec {self.project_name} /pypro/p3dj11/bin/python /pypro/{self.project_name}/src/manage.py {cmd}') 
         
     
     def exportDb(self):
