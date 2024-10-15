@@ -38,7 +38,9 @@ class DifPro(object):
             file_str = ' '.join(files)
             if file_str:
                 print(f'变化文件:{files}')
-                local.run(fr'git archive -o {dest} HEAD {file_str}')   
+                #local.run(fr'git archive -o {dest} HEAD {file_str}') 
+                # file_str遇到删除的文件，-o 选项会出错
+                local.run(fr'git archive -o {dest} HEAD')   
             else:
                 print(f'{dest}没有变化')
         else:
